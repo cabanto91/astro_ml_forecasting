@@ -1,0 +1,39 @@
+[project]
+name = "astro-ml-forecasting"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "apache-airflow>=3.1.0",
+    "boto3>=1.40.40",
+    "category-encoders>=2.8.1",
+    "fastapi>=0.117.1",
+    "holidays>=0.81",
+    "httpx>=0.28.1",
+    "joblib>=1.5.2",
+    "lightgbm>=4.6.0",
+    "matplotlib>=3.10.6",
+    "mlflow>=3.4.0",
+    "numpy>=2.3.3",
+    "optuna>=4.5.0",
+    "pandas>=2.3.2",
+    "pandera>=0.26.1",
+    "plotly>=6.3.0",
+    "prophet>=1.1.7",
+    "psycopg2-binary>=2.9.10",
+    "pydantic>=2.11.9",
+    "pymongo>=4.15.1",
+    "pytest>=8.4.2",
+    "python-dotenv>=1.1.1",
+    "pyyaml>=6.0.3",
+    "s3fs>=0.4.2",
+    "scikit-learn>=1.7.2",
+    "scipy>=1.16.2",
+    "seaborn>=0.13.2",
+    "sqlalchemy>=2.0.43",
+    "statsmodels>=0.14.5",
+    "streamlit>=1.50.0",
+    "uvicorn>=0.37.0",
+    "xgboost>=3.0.5",
+]

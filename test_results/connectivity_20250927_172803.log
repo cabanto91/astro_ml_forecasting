@@ -1,0 +1,43 @@
+🚀 Starting connectivity tests for ML Forecasting services...
+
+⏳ Waiting 10 seconds for services to be ready...
+
+==================================================
+🔍 Testing MLflow connectivity...
+❌ MLflow connection failed: HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000027ACAF042F0>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+==================================================
+
+==================================================
+🔍 Testing PostgreSQL connectivity...
+❌ PostgreSQL connection failed: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+==================================================
+
+==================================================
+🔍 Testing MinIO connectivity...
+❌ MinIO connection failed: HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /minio/health/live (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000027ACAEED450>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+==================================================
+
+==================================================
+🔍 Testing Redis connectivity...
+❌ Redis connection failed: Error 10061 connecting to localhost:6379. No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión.
+==================================================
+
+==================================================
+🔍 Testing MLflow to MinIO integration...
+❌ MLflow to MinIO integration failed: API request to http://localhost:5001/api/2.0/mlflow/experiments/get-by-name failed with exception HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /api/2.0/mlflow/experiments/get-by-name?experiment_name=connectivity_test (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000027AD1058490>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+==================================================
+
+📊 TEST RESULTS SUMMARY
+==================================================
+MLflow                         ❌ FAIL
+PostgreSQL                     ❌ FAIL
+MinIO                          ❌ FAIL
+Redis                          ❌ FAIL
+MLflow-MinIO Integration       ❌ FAIL
+
+Overall: 0/5 tests passed
+❌ Some tests failed. Check the logs above.

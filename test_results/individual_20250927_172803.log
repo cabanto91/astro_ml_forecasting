@@ -1,0 +1,56 @@
+⏳ Waiting 5 seconds for services to be ready...
+🚀 Starting individual service tests...
+
+
+==================================================
+🔍 Testing MLflow service...
+  ❌ Health Endpoint: HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000019D60BD9D30>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+  ❌ API Endpoint: HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /api/2.0/mlflow/experiments/search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000019D60B8F9D0>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+  ❌ Experiments API: API request to http://localhost:5001/api/2.0/mlflow/experiments/search failed with exception HTTPConnectionPool(host='localhost', port=5001): Max retries exceeded with url: /api/2.0/mlflow/experiments/search (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000019D67C7B8A0>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+==================================================
+
+==================================================
+🔍 Testing PostgreSQL service...
+  ❌ Connection: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+  ❌ Database Exists: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+  ❌ MLflow Tables: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+==================================================
+
+==================================================
+🔍 Testing MinIO service...
+  ❌ Health Check: HTTPConnectionPool(host='localhost', port=9000): Max retries exceeded with url: /minio/health/live (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000019D67C7BCE0>: Failed to establish a new connection: [WinError 10061] No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión'))
+  ❌ Console Access
+  ❌ S3 API: Could not connect to the endpoint URL: "http://localhost:9000/"
+  ❌ Bucket Creation: Could not connect to the endpoint URL: "http://localhost:9000/test-bucket-health-check"
+  ❌ Object Operations
+==================================================
+
+==================================================
+🔍 Testing Redis service...
+  ❌ Connection: Error 10061 connecting to localhost:6379. No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión.
+  ❌ Ping: Error 10061 connecting to localhost:6379. No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión.
+  ❌ Set/Get Operations: Error 10061 connecting to localhost:6379. No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión.
+  ❌ Memory Info: Error 10061 connecting to localhost:6379. No se puede establecer una conexión ya que el equipo de destino denegó expresamente dicha conexión.
+==================================================
+
+📊 SERVICE HEALTH SUMMARY
+==================================================
+MLFLOW          ❌ UNHEALTHY
+POSTGRESQL      ❌ UNHEALTHY
+MINIO           ❌ UNHEALTHY
+REDIS           ❌ UNHEALTHY
+
+Overall: 0/4 services healthy
+❌ Some services are unhealthy. Check the logs above.
