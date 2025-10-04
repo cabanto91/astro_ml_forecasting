@@ -32,7 +32,7 @@ default_args = {
 def sales_forecast_training():
     @task()
     def extract_data_task():
-        
+
         data_output_dir = "/tmp/sales_data"
         generator = RealisticSalesDataGenerator(
             start_date="2021-01-01", end_date="2021-12-31"
@@ -41,19 +41,17 @@ def sales_forecast_training():
         file_paths = generator.generate_sales_data(output_dir=data_output_dir)
         total_files = sum(len(paths) for paths in file_paths.values())
         print(f"Generated {total_files} files:")
-        
         for data_type, paths in file_paths.items():
             print(f"  - {data_type}: {len(paths)} files")
-            
         return {
             "data_output_dir": data_output_dir,
             "file_paths": file_paths,
             "total_files": total_files,
         }
-        
+
     @task()
     def validate_data_task(extract_result):
-        
+
         file_paths = extract_result["file_paths"]
         total_rows = 0
         issues_found = []
@@ -80,7 +78,6 @@ def sales_forecast_training():
                 issues_found.append(f"Negative quantities in {sales_file}")
             if df["revenue"].min() < 0:
                 issues_found.append(f"Negative revenue in {sales_file}")
-                
         for data_type in ["promotions", "store_events", "customer_traffic"]:
             if data_type in file_paths and file_paths[data_type]:
                 sample_file = file_paths[data_type][0]
@@ -100,7 +97,7 @@ def sales_forecast_training():
         else:
             print(f"Validation passed! Total rows: {total_rows}")
         return validation_summary
-    
+
     @task()
     def train_models_task(extract_result, validation_summary):
         file_paths = extract_result["file_paths"]
@@ -158,13 +155,10 @@ def sales_forecast_training():
             )
         print(f"Final training data shape: {daily_sales.shape}")
         print(f"Columns: {daily_sales.columns.tolist()}")
-        
         trainer = ModelTrainer()
-        
-        
-    
+
     # Task dependencies using function calls
     extract_result = extract_data_task()
     validation_summary = validate_data_task(extract_result)
-    
+
 sales_forecast_training_dag = sales_forecast_training()

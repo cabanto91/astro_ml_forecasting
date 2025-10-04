@@ -17,10 +17,16 @@ import optuna
 import mlflow
 
 
-
 logger = logging.getLogger(__name__)
 
 
 class ModelTrainer:
-    def __init__(self, config_path: str = "/usr/local/airflow/include/config/ml_config.yaml"):
-        pass
+
+    def __init__(
+        self, config_path: str = "/usr/local/airflow/include/config/ml_config.yaml"
+    ):
+        with open(config_path, "r") as f:
+            self.config = yaml.safe_load(f)
+
+        self.model_config = self.config["models"]
+        self.training_config = self.config["training"]
