@@ -1,13 +1,18 @@
 from datetime import datetime, timedelta
 from airflow.decorators import dag, task
+from airflow.operators.bash import BashOperator
 import pandas as pd
+import os
 import sys
 
 # Add include path
 sys.path.append("/usr/local/airflow/include")
-
 from utils.data_generator import RealisticSalesDataGenerator
+
 from ml_models.train_models import ModelTrainer
+from utils.mlflow_utils import MLflowManager
+from data_validation.validators import DataValidator
+
 
 default_args = {
     "owner": "data-team",
@@ -32,6 +37,7 @@ default_args = {
 def sales_forecast_training():
     @task()
     def extract_data_task():
+        
 
         data_output_dir = "/tmp/sales_data"
         generator = RealisticSalesDataGenerator(
@@ -51,6 +57,7 @@ def sales_forecast_training():
 
     @task()
     def validate_data_task(extract_result):
+        import glob
 
         file_paths = extract_result["file_paths"]
         total_rows = 0
@@ -156,9 +163,146 @@ def sales_forecast_training():
         print(f"Final training data shape: {daily_sales.shape}")
         print(f"Columns: {daily_sales.columns.tolist()}")
         trainer = ModelTrainer()
+        store_daily_sales = (
+            daily_sales.groupby(["date", "store_id"])
+            .agg(
+                {
+                    "sales": "sum",
+                    "quantity_sold": "sum",
+                    "profit": "sum",
+                    "has_promotion": "mean",
+                    "customer_traffic": "first",
+                    "is_holiday": "first",
+                }
+            )
+            .reset_index()
+        )
+        store_daily_sales["date"] = pd.to_datetime(store_daily_sales["date"])
+        train_df, val_df, test_df = trainer.prepare_data(
+            store_daily_sales,
+            target_col="sales",
+            date_col="date",
+            group_cols=["store_id"],
+            categorical_cols=["store_id"],
+        )
+        print(
+            f"Train shape: {train_df.shape}, Val shape: {val_df.shape}, Test shape: {test_df.shape}"
+        )
+        results = trainer.train_all_models(
+            train_df, val_df, test_df, target_col="sales", use_optuna=True
+        )
+        for model_name, model_results in results.items():
+            if "metrics" in model_results:
+                print(f"\n{model_name} metrics:")
+                for metric, value in model_results["metrics"].items():
+                    print(f"  {metric}: {value:.4f}")
+        print("\nVisualization charts have been generated and saved to MLflow/MinIO")
+        print("Charts include:")
+        print("  - Model metrics comparison")
+        print("  - Predictions vs actual values")
+        print("  - Residuals analysis")
+        print("  - Error distribution")
+        print("  - Feature importance comparison")
+        serializable_results = {}
+        for model_name, model_results in results.items():
+            serializable_results[model_name] = {
+                "metrics": model_results.get("metrics", {})
+            }
+        import mlflow
+
+        current_run_id = (
+            mlflow.active_run().info.run_id if mlflow.active_run() else None
+        )
+        return {
+            "training_results": serializable_results,
+            "mlflow_run_id": current_run_id,
+        }
+
+    @task()
+    def evaluate_models_task(training_result):
+        results = training_result["training_results"]
+        mlflow_manager = MLflowManager()
+        best_model_name = None
+        best_rmse = float("inf")
+        for model_name, model_results in results.items():
+            if "metrics" in model_results and "rmse" in model_results["metrics"]:
+                if model_results["metrics"]["rmse"] < best_rmse:
+                    best_rmse = model_results["metrics"]["rmse"]
+                    best_model_name = model_name
+        print(f"Best model: {best_model_name} with RMSE: {best_rmse:.4f}")
+        best_run = mlflow_manager.get_best_model(metric="rmse", ascending=True)
+        return {"best_model": best_model_name, "best_run_id": best_run["run_id"]}
+
+    @task()
+    def register_best_model_task(evaluation_result):
+        evaluation_result["best_model"]
+        run_id = evaluation_result["best_run_id"]
+        mlflow_manager = MLflowManager()
+        model_versions = {}
+        for model_name in ["xgboost", "lightgbm"]:
+            version = mlflow_manager.register_model(run_id, model_name, model_name)
+            model_versions[model_name] = version
+            print(f"Registered {model_name} version: {version}")
+        return model_versions
+
+    @task()
+    def transition_to_production_task(model_versions):
+        mlflow_manager = MLflowManager()
+        for model_name, version in model_versions.items():
+            mlflow_manager.transition_model_stage(model_name, version, "Production")
+            print(f"Transitioned {model_name} v{version} to Production")
+        return "Models transitioned to production"
+
+    @task()
+    def generate_performance_report_task(training_result, validation_summary):
+        results = training_result["training_results"]
+        report = {
+            "timestamp": datetime.now().isoformat(),
+            "data_summary": {
+                "total_rows": (
+                    validation_summary.get("total_rows", 0) if validation_summary else 0
+                ),
+                "files_validated": (
+                    validation_summary.get("total_files_validated", 0)
+                    if validation_summary
+                    else 0
+                ),
+                "issues_found": (
+                    validation_summary.get("issues_found", 0)
+                    if validation_summary
+                    else 0
+                ),
+                "issues": (
+                    validation_summary.get("issues", []) if validation_summary else []
+                ),
+            },
+            "model_performance": {},
+        }
+        if results:
+            for model_name, model_results in results.items():
+                if "metrics" in model_results:
+                    report["model_performance"][model_name] = model_results["metrics"]
+        import json
+
+        with open("/tmp/performance_report.json", "w") as f:
+            json.dump(report, f, indent=2)
+        print("Performance report generated")
+        print(f"Models trained: {list(report['model_performance'].keys())}")
+        return report
 
     # Task dependencies using function calls
     extract_result = extract_data_task()
     validation_summary = validate_data_task(extract_result)
+    training_result = train_models_task(extract_result, validation_summary)
+    evaluation_result = evaluate_models_task(training_result)
+    model_versions = register_best_model_task(evaluation_result)
+    transition = transition_to_production_task(model_versions)
+    report = generate_performance_report_task(training_result, validation_summary)
+    cleanup = BashOperator(
+        task_id="cleanup",
+        bash_command="rm -rf /tmp/sales_data /tmp/performance_report.json || true",
+    )
+    report >> cleanup
+
 
 sales_forecast_training_dag = sales_forecast_training()
